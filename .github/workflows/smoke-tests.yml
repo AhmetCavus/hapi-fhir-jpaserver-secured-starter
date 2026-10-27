@@ -1,5 +1,4 @@
-# This workflow will build the Java project with Maven and peform IntelliJ smoke tests
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+# Build the Spring Boot application and run IntelliJ HTTP smoke tests.
 
 name: Smoke Tests
 
@@ -23,24 +22,25 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
-          java-version: 17
+          java-version: 21
           distribution: zulu
 
-      - name: Build with Maven
-        env:
-          MAVEN_OPTS: -Xms256m -Xmx3g -XX:+UseG1GC
-        run: mvn -B package --file pom.xml -Dmaven.test.skip=true
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build executable WAR
+        run: bash ./gradlew --no-daemon bootWar
 
       - name: Docker Pull HTTP client
         run: docker pull jetbrains/intellij-http-client
 
-      - name: Start server with jetty
+      - name: Start Spring Boot server
         run: |
           mkdir -p logs
-          mvn -P jetty spring-boot:run | tee logs/server.log &
+          java -jar build/libs/ROOT.war > logs/server.log 2>&1 &
           sleep 80
 
       - name: Execute smoke tests

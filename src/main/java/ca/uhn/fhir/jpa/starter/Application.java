@@ -12,14 +12,19 @@ import ca.uhn.fhir.jpa.subscription.match.config.SubscriptionProcessorConfig;
 import ca.uhn.fhir.jpa.subscription.match.config.WebsocketDispatcherConfig;
 import ca.uhn.fhir.jpa.subscription.submit.config.SubscriptionSubmitterConfig;
 import ca.uhn.fhir.rest.server.RestfulServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration;
 import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.boot.web.server.Ssl;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
+import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -41,12 +46,17 @@ import org.springframework.context.annotation.Import;
 })
 public class Application extends SpringBootServletInitializer {
 
+	private static final Logger ourLog = LoggerFactory.getLogger(Application.class);
+
 	public static void main(String[] args) {
+		ServletWebServerApplicationContext context =
+				(ServletWebServerApplicationContext) SpringApplication.run(Application.class, args);
+		ServerProperties serverProperties = context.getBean(ServerProperties.class);
+		String scheme = Ssl.isEnabled(serverProperties.getSsl()) ? "https" : "http";
+		String contextPath = context.getServletContext().getContextPath();
+		String baseUrl = scheme + "://localhost:" + context.getWebServer().getPort() + contextPath;
 
-		SpringApplication.run(Application.class, args);
-
-		// Server is now accessible at e.g. http://localhost:8080/fhir/metadata
-		// UI is now accessible at http://localhost:8080/
+		ourLog.info("\n\nStarted successfully\n- {}\n- {}/fhir/metadata\n", baseUrl, baseUrl);
 	}
 
 	@Autowired

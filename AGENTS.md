@@ -9,29 +9,31 @@
 - `Dockerfile`, `build-docker-image.sh`: Reference container build scripts used by CI/CD.
 
 ## Build, Test, and Development Commands
-- `mvn clean install`: Compile, run Surefire + Failsafe, and emit `target/ROOT.war`.
-- `mvn spring-boot:run -Pboot`: Start the server on port 8080 with hot reload-friendly Boot profile.
-- `mvn clean package spring-boot:repackage -Pboot && java -jar target/ROOT.war`: Build and exercise the bootable WAR.
+- `./gradlew clean build`: Compile, check formatting, run unit/integration tests, and emit `build/libs/ROOT.war`.
+- `./gradlew bootRun`: Start Spring Boot with embedded Tomcat on port 8080.
+- `./gradlew bootWar` then `java -jar build/libs/ROOT.war`: Build and exercise the executable WAR without tests.
+- On Windows, use `.\gradlew.bat` in place of `./gradlew`.
 - `docker-compose up -d --build`: Launch JPAServer + PostgreSQL using the local Dockerfile.
 - `docker run -p 8080:8080 hapiproject/hapi:latest`: Compare against the upstream binary distribution.
 
 ## Coding Style & Naming Conventions
-- Target Java 17, four-space indents, alphabetized imports, no wildcards.
+- Target Java 21, four-space indents, alphabetized imports, no wildcards.
 - Keep code under `ca.uhn.fhir.jpa.starter` and mirror packages in tests.
 - Prefer descriptive class suffixes (`*Provider`, `*Service`, `*Config`) and constructor injection with `final` collaborators.
 - YAML keys stay kebab-case; JSON fixtures use lower_snake_case filenames.
 
 ## Testing Guidelines
-- `mvn test`: Runs JUnit Jupiter unit suites such as `CustomBeanTest` and `ParallelUpdatesVersionConflictTest`.
-- `mvn verify`: Adds integration coverage through Failsafe with the default H2 datasource; if you pivot to PostgreSQL, run `mvn install -DskipTests` until fixtures are updated.
-- Store integration suites as `*IT.java` so Failsafe detects them and colocate datasets in `src/test/resources`.
-- Leverage Testcontainers and HAPI FHIR test utilities already declared in `pom.xml`.
+- `./gradlew test`: Runs JUnit Jupiter `*Test` unit suites such as `CustomBeanTest` and `ParallelUpdatesVersionConflictTest`.
+- `./gradlew integrationTest`: Runs `*IT` suites with the default H2 datasource; if you pivot to PostgreSQL, use `./gradlew bootWar` until fixtures are updated.
+- `./gradlew build`: Runs both suites, formatting checks, and JaCoCo reporting. Some integration suites require Docker.
+- Store integration suites as `*IT.java` and colocate datasets in `src/test/resources`.
+- Leverage Testcontainers and HAPI FHIR test utilities already declared in `build.gradle.kts`.
 
 ## Commit & Pull Request Guidelines
 - Follow repository precedent: imperative summary, optional scope (`Feature/mcp`), and linked issue `(#123)` when applicable.
 - Keep commits narrowly scoped and include config or fixture updates with the code they support.
 - PRs should describe runtime impact (profiles, ports, env vars), reference issues, and include UI screenshots when behaviour changes.
-- Run `mvn verify` or the relevant Docker workflow before review; note any skipped checks and how to reproduce the result.
+- Run `./gradlew build` or the relevant Docker workflow before review; note any skipped checks and how to reproduce the result.
 
 ## Security & Configuration Tips
 - Do not commit secrets; stash overrides under `configs/` and explain required env vars in the PR.

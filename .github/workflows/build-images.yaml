@@ -28,16 +28,6 @@ jobs:
             type=match,pattern=image/(.*),group=1,enable=${{github.event_name != 'pull_request'}}
            
 
-      - name: Container meta for tomcat image
-        id: docker_tomcat_meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGES }}
-          tags: |
-            type=match,pattern=image/(.*),group=1,enable=${{github.event_name != 'pull_request'}}
-          flavor: |
-            suffix=-tomcat,onlatest=true
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -70,15 +60,3 @@ jobs:
           labels: ${{ steps.docker_meta.outputs.labels }}
           platforms: ${{ env.PLATFORMS }}
           target: default
-
-      - name: Build and push tomcat image
-        id: docker_build_tomcat
-        uses: docker/build-push-action@v5
-        with:
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.docker_tomcat_meta.outputs.tags }}
-          labels: ${{ steps.docker_tomcat_meta.outputs.labels }}
-          platforms: ${{ env.PLATFORMS }}
-          target: tomcat

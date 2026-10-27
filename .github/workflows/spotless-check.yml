@@ -1,4 +1,4 @@
-name: mvn spotless:check (Formatting)
+name: Gradle Spotless (Formatting)
 
 
 on:
@@ -12,13 +12,16 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v3
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
-      - name: spotless:check
-        run: mvn spotless:check
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: spotlessCheck
+        id: spotless_check
+        run: bash ./gradlew --no-daemon spotlessCheck
       -  uses: mshick/add-pr-comment@v2
          # Only run if the previous step failed
          if: failure() && steps.spotless_check.outcome == 'failure'
@@ -29,6 +32,6 @@ jobs:
            message-failure: |
              **This Pull Request has failed the formatting check**
              
-             Please run `mvn spotless:apply` or `mvn clean install -DskipTests` to fix the formatting issues. 
+             Please run `bash ./gradlew spotlessApply` to fix the formatting issues.
              
              You can automate this auto-formatting process to execute on the git pre-push hook, by installing [pre-commit](https://pre-commit.com/) and then calling `pre-commit install --hook-type pre-push`. This will cause formatting to run automatically whenever you push. 

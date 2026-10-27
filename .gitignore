@@ -1,5 +1,7 @@
 *.orig
 target/
+.gradle/
+build/
 *.iml
 
 # Compiled class file
@@ -16,6 +18,7 @@ target/
 
 # Package Files #
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 *.nar
 *.ear

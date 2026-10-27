@@ -20,11 +20,49 @@ In order to use this sample, you should have:
 - [This project](https://github.com/hapifhir/hapi-fhir-jpaserver-starter) checked out. You may wish to create a GitHub Fork of the project and check that out instead so that you can customize the project and save the results to GitHub.
 
 ### and either
- - Oracle Java (JDK) installed: Minimum JDK17 or newer.
- - Apache Maven build tool (newest version)
+ - JDK 21 installed and selected through `JAVA_HOME`.
+ - The checked-in Gradle wrapper; a separate Gradle installation is not required.
 
 ### or
- - Docker, as the entire project can be built using multistage docker (with both JDK and maven wrapped in docker) or used directly from [Docker Hub](https://hub.docker.com/r/hapiproject/hapi)
+ - Docker, as the entire project can be built using multistage Docker (with both JDK and Gradle inside Docker) or used directly from [Docker Hub](https://hub.docker.com/r/hapiproject/hapi)
+
+## Building with Gradle
+
+The build uses Kotlin DSL in `build.gradle.kts`. Application and test sources remain Java.
+Spring Boot with embedded Tomcat is the supported runtime; no build profile is required.
+
+On Windows, use `.\gradlew.bat` in place of `./gradlew` below.
+On Linux and macOS, run `chmod +x gradlew` once after checkout if necessary.
+
+| Command | Purpose |
+| --- | --- |
+| `./gradlew bootRun` | Start Spring Boot on port 8080. |
+| `./gradlew clean build` | Compile, package, check formatting, and run unit and integration tests with coverage. |
+| `./gradlew test` | Run `*Test` unit suites, matching the upstream build's test selection. |
+| `./gradlew integrationTest` | Run `*IT` integration tests; some require Docker. |
+| `./gradlew bootWar` | Build `build/libs/ROOT.war` without running tests. |
+| `./gradlew jacocoTestReport` | Run both test suites and write HTML/XML coverage under `build/reports/jacoco/test`. |
+| `./gradlew spotlessCheck` / `./gradlew spotlessApply` | Check or apply source formatting. |
+
+Run the packaged application with `java -jar build/libs/ROOT.war`.
+The `bootRun` task builds and launches this WAR so the complete FHIR Tester overlay is available during development.
+Once startup completes, the application prints `Started successfully` and links to the UI and FHIR metadata.
+The links use the actual server port, context path, and HTTP/HTTPS configuration.
+Gradle uses plain console output by default; `bootRun` stays active until the server stops.
+To run a single test, use `./gradlew test --tests '*CustomBeanTest'`.
+To skip both test suites during a full build, use `./gradlew build -x test -x integrationTest -x jacocoTestReport`.
+
+Dependency versions and build options are in `gradle.properties` and can be overridden using `-P`,
+for example `./gradlew bootWar -PjavaVersion=21`.
+The former Cloud SQL option is available as `./gradlew bootRun -PcloudSqlPostgres=true`.
+Application settings still belong in `src/main/resources/application.yaml` or Spring configuration overrides.
+
+If HTTPS inspection on Windows prevents Java from trusting the dependency repositories, use the certificates
+already trusted by Windows for the current PowerShell session before running Gradle:
+
+```powershell
+$env:JAVA_TOOL_OPTIONS = '-Djavax.net.ssl.trustStoreType=Windows-ROOT -Djavax.net.ssl.trustStore=NONE'
+```
 
 ## Running via [Docker Hub](https://hub.docker.com/r/hapiproject/hapi)
 
@@ -119,8 +157,8 @@ Here, the configuration file (*another.application.yaml*) is part of the compile
 You can layer additional configuration files on top of the default application.yaml while preserving all the base settings. This approach allows you to create specific override files for different environments without duplicating the entire configuration.
 
 ```bash
-# Using Maven
-mvn spring-boot:run -Dspring-boot.run.arguments="--spring.config.additional-location=classpath:your-overrides.yaml"
+# Using Gradle
+./gradlew bootRun --args='--spring.config.additional-location=classpath:your-overrides.yaml'
 
 # Using Docker
 docker run -p 8080:8080 -e "--spring.config.additional-location=classpath:your-overrides.yaml" hapiproject/hapi:latest
@@ -265,18 +303,11 @@ public class YourInterceptor
 
 ## Running locally
 
-The easiest way to run this server entirely depends on your environment requirements. The following ways are supported:
-
-### Using jetty
-```bash
-mvn -Pjetty spring-boot:run
-```
-
-The Server will then be accessible at http://localhost:8080/fhir and the CapabilityStatement will be found at http://localhost:8080/fhir/metadata.
+Run the application with Spring Boot using Gradle or the executable WAR.
 
 ### Using Spring Boot
 ```bash
-mvn spring-boot:run
+./gradlew bootRun
 ```
 
 The Server will then be accessible at http://localhost:8080/fhir and the CapabilityStatement will be found at http://localhost:8080/fhir/metadata.
@@ -302,9 +333,9 @@ The Server will then be accessible at http://localhost:8888/fhir and the Capabil
           fhir_version: R4
 ```
 
-### Using Spring Boot with :run
+### Starting from a clean build
 ```bash
-mvn clean spring-boot:run -Pboot
+./gradlew clean bootRun
 ```
 Server will then be accessible at http://localhost:8080/ and e.g. http://localhost:8080/fhir/metadata. Remember to adjust you overlay configuration in the application.yaml to the following:
 
@@ -318,9 +349,10 @@ Server will then be accessible at http://localhost:8080/ and e.g. http://localho
           fhir_version: R4
 ```
 
-### Using Spring Boot
+### Running the packaged application
 ```bash
-mvn clean package spring-boot:repackage -DskipTests=true -Pboot && java -jar target/ROOT.war
+./gradlew clean bootWar
+java -jar build/libs/ROOT.war
 ```
 Server will then be accessible at http://localhost:8080/ and e.g. http://localhost:8080/fhir/metadata. Remember to adjust your overlay configuration in the application.yaml to the following:
 
@@ -335,7 +367,8 @@ Server will then be accessible at http://localhost:8080/ and e.g. http://localho
 ```
 ### Using Spring Boot and Google distroless
 ```bash
-mvn clean package com.google.cloud.tools:jib-maven-plugin:dockerBuild -Dimage=distroless-hapi && docker run -p 8080:8080 distroless-hapi
+docker build -t distroless-hapi .
+docker run -p 8080:8080 distroless-hapi
 ```
 Server will then be accessible at http://localhost:8080/ and e.g. http://localhost:8080/fhir/metadata. Remember to adjust your overlay configuration in the application.yaml to the following:
 
@@ -394,7 +427,7 @@ spring:
       # Then comment all hibernate.search.backend.*
 ```
 
-Because the integration tests within the project rely on the default H2 database configuration, it is important to either explicitly skip the integration tests during the build process, i.e., `mvn install -DskipTests`, or delete the tests altogether. Failure to skip or delete the tests once you've configured PostgreSQL for the datasource.driver, datasource.url, and hibernate.dialect as outlined above will result in build errors and compilation failure.
+The test fixtures use the default H2 database configuration. After switching the local defaults to PostgreSQL, package with `./gradlew bootWar` until the fixtures are updated, or supply a separate test configuration.
 
 ### Microsoft SQL Server configuration
 
@@ -418,7 +451,7 @@ hibernate.dialect: {some none Microsoft SQL dialect}
 ```
 
 
-Because the integration tests within the project rely on the default H2 database configuration, it is important to either explicitly skip the integration tests during the build process, i.e., `mvn install -DskipTests`, or delete the tests altogether. Failure to skip or delete the tests once you've configured PostgreSQL for the datasource.driver, datasource.url, and hibernate.dialect as outlined above will result in build errors and compilation failure.
+The test fixtures use the default H2 database configuration. After switching the local defaults to PostgreSQL, package with `./gradlew bootWar` until the fixtures are updated, or supply a separate test configuration.
 
 
 NOTE: MS SQL Server by default uses a case-insensitive codepage. This will cause errors with some operations - such as when expanding case-sensitive valuesets (UCUM) as there are unique indexes defined on the terminology tables for codes.
@@ -450,40 +483,6 @@ The UI that comes with this server is an exact clone of the server available at 
 The UI is customized using [Thymeleaf](https://www.thymeleaf.org/) template files. You might want to learn more about Thymeleaf, but you don't necessarily need to: they are quite easy to figure out.
 
 Several template files that can be customized are found in the following directory: [https://github.com/hapifhir/hapi-fhir-jpaserver-starter/tree/master/src/main/webapp/WEB-INF/templates](https://github.com/hapifhir/hapi-fhir-jpaserver-starter/tree/master/src/main/webapp/WEB-INF/templates)
-
-## Deploying to an Application Server
-
-Using the Maven-Embedded Jetty method above is convenient, but it is not a good solution if you want to leave the server running in the background.
-
-Most people who are using HAPI FHIR JPA as a server that is accessible to other people (whether internally on your network or publicly hosted) will do so using an Application Server, such as [Apache Tomcat](http://tomcat.apache.org/) or [Jetty](https://www.eclipse.org/jetty/). Note that any Servlet 3.0+ compatible Web Container will work (e.g. Wildfly, Websphere, etc.).
-
-Tomcat is very popular, so it is a good choice simply because you will be able to find many tutorials online. Jetty is a great alternative due to its fast startup time and good overall performance.
-
-To deploy to a container, you should first build the project:
-
-```bash
-mvn clean install
-```
-
-This will create a file called `ROOT.war` in your `target` directory. This should be installed in your Web Container according to the instructions for your particular container. For example, if you are using Tomcat, you will want to copy this file to the `webapps/` directory.
-
-Again, browse to the following link to use the server (note that the port 8080 may not be correct depending on how your server is configured).
-
-[http://localhost:8080/](http://localhost:8080/)
-
-You will then be able to access the JPA server e.g. using http://localhost:8080/fhir/metadata.
-
-If you would like it to be hosted at e.g. hapi-fhir-jpaserver, e.g. http://localhost:8080/hapi-fhir-jpaserver/ or http://localhost:8080/hapi-fhir-jpaserver/fhir/metadata - then rename the WAR file to ```hapi-fhir-jpaserver.war``` and adjust the overlay configuration accordingly e.g.
-
-```yaml
-    tester:
-      -
-          id: home
-          name: Local Tester
-          server_address: 'http://localhost:8080/hapi-fhir-jpaserver/fhir'
-          refuse_to_fetch_third_party_urls: false
-          fhir_version: R4
-```
 
 ## Running behind a reverse proxy
 
@@ -517,7 +516,7 @@ Ensure the proxy sends the usual forwarded headers, such as `X-Forwarded-Host`, 
 ## Deploy with docker compose
 
 Docker compose is a simple option to build and deploy containers. To deploy with docker compose, you should build the project
-with `mvn clean install` and then bring up the containers with `docker-compose up -d --build`. The server can be
+with `docker-compose up -d --build`; the Docker build runs Gradle inside the build container. The server can be
 reached at http://localhost:8080/.
 
 In order to use another port, change the `ports` parameter
@@ -564,40 +563,10 @@ The probe URL is built from the following environment variables (matching Spring
 Make sure the actuator health endpoint is exposed (e.g. `management.endpoints.web.exposure.include=health`).
 To enable periodic health checks, uncomment the `healthcheck` block in `docker-compose.yml`.
 
-## Running hapi-fhir-jpaserver directly from IntelliJ as Spring Boot
-Make sure you run with the maven profile called ```boot``` and NOT also ```jetty```. Then you are ready to press debug the project directly without any extra Application Servers.
+## Running from IntelliJ as Spring Boot
 
-## Running hapi-fhir-jpaserver-example in Tomcat from IntelliJ
-
-Install Tomcat.
-
-Make sure you have Tomcat set up in IntelliJ.
-
-- File->Settings->Build, Execution, Deployment->Application Servers
-- Click +
-- Select "Tomcat Server"
-- Enter the path to your tomcat deployment for both Tomcat Home (IntelliJ will fill in base directory for you)
-
-Add a Run Configuration for running hapi-fhir-jpaserver-example under Tomcat
-
-- Run->Edit Configurations
-- Click the green +
-- Select Tomcat Server, Local
-- Change the name to whatever you wish
-- Uncheck the "After launch" checkbox
-- On the "Deployment" tab, click the green +
-- Select "Artifact"
-- Select "hapi-fhir-jpaserver-example:war"
-- In "Application context" type /hapi
-
-Run the configuration.
-
-- You should now have an "Application Servers" in the list of windows at the bottom.
-- Click it.
-- Select your server, and click the green triangle (or the bug if you want to debug)
-- Wait for the console output to stop
-
-Point your browser (or fiddler, or what have you) to `http://localhost:8080/hapi/baseDstu3/Patient`
+Import the project using its Gradle build, select JDK 21 as the Gradle JVM and project SDK, and run
+ca.uhn.fhir.jpa.starter.Application or the bootRun Gradle task. Use bootRun to include the complete FHIR Tester overlay.
 
 ## Enabling Subscriptions
 
@@ -662,11 +631,11 @@ Set `reuse_cached_search_results_millis: -1` in the [application.yaml](https://g
 
 ## Build the distroless variant of the image (for lower footprint and improved security)
 
-The default Dockerfile contains a `release-distroless` stage to build a variant of the image
-using the `gcr.io/distroless/java-debian10:11` base image:
+The default Dockerfile contains a `default` stage to build a variant of the image
+using the `gcr.io/distroless/java21-debian13:nonroot` base image:
 
 ```sh
-docker build --target=release-distroless -t hapi-fhir:distroless .
+docker build --target=default -t hapi-fhir:distroless .
 ```
 
 Note that distroless images are also automatically built and pushed to the container registry,
