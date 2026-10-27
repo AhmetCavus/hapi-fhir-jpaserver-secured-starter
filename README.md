@@ -1,17 +1,54 @@
-# HAPI-FHIR Starter Project
+# HAPI FHIR JPA Server — Secured Starter
 
-This project is a complete starter project you can use to deploy a FHIR server using HAPI FHIR JPA.
+> **Project status: Work in progress.** The migration to Gradle (Kotlin DSL) and Java 21 is complete. The Spring Security integration described below is **planned, not yet implemented**. The current server should not be treated as a secured deployment.
 
-Note that this project is specifically intended for end users of the HAPI FHIR JPA server module (in other words, it helps you implement HAPI FHIR, it is not the source of the library itself). If you are looking for the main HAPI FHIR project, see here: https://github.com/hapifhir/hapi-fhir
+This repository is a community-maintained fork of the official [HAPI FHIR JPA Server Starter](https://github.com/hapifhir/hapi-fhir-jpaserver-starter). It builds on the HAPI FHIR JPA Server to provide a starting point for FHIR applications with an additional, standards-based security layer.
 
-While this project shows how you can use many parts of the HAPI FHIR framework there are a set of features which you should be aware of are missing or something you need to supply yourself or get professional support ahead of using it directly in production:
+The underlying HAPI FHIR framework is maintained separately in the [main HAPI FHIR repository](https://github.com/hapifhir/hapi-fhir). This fork is an independent community effort, not an official HAPI FHIR distribution.
 
-1) The service comes with no security implementation. See how it can be done [here](https://hapifhir.io/hapi-fhir/docs/security/introduction.html)
-2) The service comes with no enterprise logging. See how it can be done [here](https://hapifhir.io/hapi-fhir/docs/security/balp_interceptor.html)
-3) The internal topic cache used by subscriptions in HAPI FHIR are not shared across multiple instances as the [default supplied implementation is in-mem](https://github.com/hapifhir/hapi-fhir/blob/master/hapi-fhir-jpaserver-subscription/src/main/java/ca/uhn/fhir/jpa/topic/ActiveSubscriptionTopicCache.java)
-4) The internal message broker channel in HAPI FHIR is not shared across multiple instances as the [default supplied implementation is in-mem](https://github.com/hapifhir/hapi-fhir/blob/master/hapi-fhir-storage/src/main/java/ca/uhn/fhir/jpa/subscription/channel/api/IChannelFactory.java). This impacts the use of modules listed [here](https://smilecdr.com/docs/installation/message_broker.html#modules-dependent-on-message-brokers)
+## What's different from upstream?
 
-Need Help? Please see: https://github.com/hapifhir/hapi-fhir/wiki/Getting-Help
+| Area | This fork | Status |
+| --- | --- | --- |
+| Build system | Gradle with Kotlin DSL (`build.gradle.kts`) instead of Maven | Implemented |
+| Java | Java 21 toolchain | Implemented |
+| Security | Spring Security with OAuth 2.0 Resource Server support | Planned |
+| Reusability | Security components intended for reuse beyond this starter | Design goal |
+
+The application and test sources remain Java; Kotlin DSL is used for the Gradle build configuration.
+
+## Project goals
+
+The main goal is to offer a **FHIR server starter with a reusable security layer**, reducing the effort needed to add authentication and authorization to FHIR-based systems.
+
+The planned approach separates responsibilities:
+
+- **Authentication and token validation:** Use Spring Security's OAuth 2.0 Resource Server support to validate bearer access tokens against a configurable authorization server (for example, Keycloak).
+- **FHIR-specific authorization:** Enforce resource-level access rules using HAPI FHIR's authorization mechanisms. A valid access token alone must not grant unrestricted access to patient data.
+- **Reusability:** Keep the security integration modular and configurable so that its components can be adapted to other Spring-based applications and FHIR deployments, rather than being tightly coupled to this fork.
+
+### Roadmap
+
+1. **Phase A — Generic OAuth 2.0 protection:** Integrate Spring Security, validate access tokens, enforce access rules, and provide automated security tests and example configuration.
+2. **Phase B — SMART on FHIR:** Add SMART-specific discovery, scopes, context handling, and interoperability tests.
+
+### Security and production readiness
+
+**Security is not implemented in this fork yet.** Do not expose the current server to untrusted networks or use it to store real patient data on the assumption that it is protected by this project. Even after security features are introduced, production deployments will require independent reviews and environment-specific hardening, auditing, and operational controls.
+
+The starter also inherits other upstream considerations, including enterprise audit logging and multi-instance subscription infrastructure. See the [HAPI FHIR security documentation](https://hapifhir.io/hapi-fhir/docs/security/introduction.html).
+
+## Getting started
+
+This fork uses the checked-in Gradle wrapper and requires **JDK 21** for local builds. See the build instructions below.
+
+**Docker note:** Commands referencing `hapiproject/hapi` use the **upstream HAPI FHIR image**, not an image published from this fork. To run this fork, build it from source or build the local Docker image.
+
+---
+
+## Additional starter documentation
+
+The following sections retain the starter's setup, build, configuration, and deployment guidance, updated for Gradle where applicable.
 
 ## Prerequisites
 
@@ -64,9 +101,11 @@ already trusted by Windows for the current PowerShell session before running Gra
 $env:JAVA_TOOL_OPTIONS = '-Djavax.net.ssl.trustStoreType=Windows-ROOT -Djavax.net.ssl.trustStore=NONE'
 ```
 
-## Running via [Docker Hub](https://hub.docker.com/r/hapiproject/hapi)
+## Running the upstream reference image via [Docker Hub](https://hub.docker.com/r/hapiproject/hapi)
 
-Each tagged/released version of `hapi-fhir-jpaserver` is built as a Docker image and published to Docker hub. To run the published Docker image from DockerHub:
+The commands in this section run the upstream HAPI FHIR distribution, **not this fork or its planned Spring Security integration**. They are useful for comparison with upstream behavior. To run this fork, build the application or its Docker image locally.
+
+To run the upstream image from Docker Hub:
 
 ```
 docker pull hapiproject/hapi:latest
