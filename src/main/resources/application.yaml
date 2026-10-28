@@ -50,6 +50,19 @@ spring:
   application:
     name: "@project.artifactId@"
 
+security:
+    oauth2:
+      enable: false
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9090/realms/fhir
+          jwk-set-uri: http://localhost:9090/realms/fhir/protocol/openid-connect/certs
+          
+      # SMART on FHIR bridge — derived endpoint URLs are built from these two base URLs.
+      smart:
+        fhir-base-url: http://localhost:8080/fhir
+        authorization-server-url: http://localhost:9090/realms/fhir
+
   # -------------------------------------------------------------------------------
   # A. Spring AI — Model Context Protocol (MCP)
   # -------------------------------------------------------------------------------

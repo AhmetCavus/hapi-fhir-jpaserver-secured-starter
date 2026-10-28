@@ -138,6 +138,7 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus-simpleclient:$micrometerVersion")
     implementation("org.springframework.ai:spring-ai-mcp:$springAiVersion")
     implementation("org.springframework.ai:spring-ai-starter-mcp-server:$springAiVersion")
+    implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
 
     implementation("org.webjars:Eonasdan-bootstrap-datetimepicker")
     implementation("org.webjars:font-awesome")
