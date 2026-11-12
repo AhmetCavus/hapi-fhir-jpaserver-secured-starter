@@ -24,10 +24,10 @@ class HealthCheckTest {
     class Defaults {
 
         @Test
-        @DisplayName("uses port 8080 and /actuator/health when no env vars are set")
-        void defaults_useServerPort8080AndActuatorRoot() {
+        @DisplayName("uses port 8080 and /actuator/health/readiness when no env vars are set")
+        void defaults_useServerPort8080AndReadiness() {
             String url = HealthCheck.buildHealthUrl(emptyEnv());
-            assertEquals("http://127.0.0.1:8080/actuator/health", url);
+            assertEquals("http://127.0.0.1:8080/actuator/health/readiness", url);
         }
 
         @Test
@@ -36,7 +36,7 @@ class HealthCheckTest {
             Map<String, String> env = new HashMap<>();
             env.put("SERVER_PORT", "9090");
             String url = HealthCheck.buildHealthUrl(envOf(env));
-            assertEquals("http://127.0.0.1:9090/actuator/health", url);
+            assertEquals("http://127.0.0.1:9090/actuator/health/readiness", url);
         }
 
         @Test
@@ -46,7 +46,7 @@ class HealthCheckTest {
             env.put("SERVER_PORT", "  ");
             env.put("MANAGEMENT_ENDPOINTS_WEB_BASE_PATH", "");
             String url = HealthCheck.buildHealthUrl(envOf(env));
-            assertEquals("http://127.0.0.1:8080/actuator/health", url);
+            assertEquals("http://127.0.0.1:8080/actuator/health/readiness", url);
         }
     }
 
@@ -60,7 +60,7 @@ class HealthCheckTest {
             Map<String, String> env = new HashMap<>();
             env.put("SERVER_SERVLET_CONTEXT_PATH", "/fhir");
             String url = HealthCheck.buildHealthUrl(envOf(env));
-            assertEquals("http://127.0.0.1:8080/fhir/actuator/health", url);
+            assertEquals("http://127.0.0.1:8080/fhir/actuator/health/readiness", url);
         }
 
         @Test
@@ -69,7 +69,7 @@ class HealthCheckTest {
             Map<String, String> env = new HashMap<>();
             env.put("SERVER_SERVLET_CONTEXT_PATH", "fhir/");
             String url = HealthCheck.buildHealthUrl(envOf(env));
-            assertEquals("http://127.0.0.1:8080/fhir/actuator/health", url);
+            assertEquals("http://127.0.0.1:8080/fhir/actuator/health/readiness", url);
         }
 
         @Test
@@ -78,7 +78,7 @@ class HealthCheckTest {
             Map<String, String> env = new HashMap<>();
             env.put("SERVER_SERVLET_CONTEXT_PATH", "/");
             String url = HealthCheck.buildHealthUrl(envOf(env));
-            assertEquals("http://127.0.0.1:8080/actuator/health", url);
+            assertEquals("http://127.0.0.1:8080/actuator/health/readiness", url);
         }
 
         @Test
@@ -87,7 +87,7 @@ class HealthCheckTest {
             Map<String, String> env = new HashMap<>();
             env.put("MANAGEMENT_ENDPOINTS_WEB_BASE_PATH", "/manage");
             String url = HealthCheck.buildHealthUrl(envOf(env));
-            assertEquals("http://127.0.0.1:8080/manage/health", url);
+            assertEquals("http://127.0.0.1:8080/manage/health/readiness", url);
         }
 
         @Test
@@ -97,7 +97,7 @@ class HealthCheckTest {
             env.put("SERVER_SERVLET_CONTEXT_PATH", "/fhir");
             env.put("MANAGEMENT_ENDPOINTS_WEB_BASE_PATH", "/manage");
             String url = HealthCheck.buildHealthUrl(envOf(env));
-            assertEquals("http://127.0.0.1:8080/fhir/manage/health", url);
+            assertEquals("http://127.0.0.1:8080/fhir/manage/health/readiness", url);
         }
     }
 
@@ -114,7 +114,7 @@ class HealthCheckTest {
             env.put("SERVER_SERVLET_CONTEXT_PATH", "/fhir");
             env.put("MANAGEMENT_SERVER_BASE_PATH", "/mgmt");
             String url = HealthCheck.buildHealthUrl(envOf(env));
-            assertEquals("http://127.0.0.1:9001/mgmt/actuator/health", url);
+            assertEquals("http://127.0.0.1:9001/mgmt/actuator/health/readiness", url);
         }
 
         @Test
@@ -125,7 +125,7 @@ class HealthCheckTest {
             env.put("MANAGEMENT_SERVER_PORT", "9001");
             env.put("SERVER_SERVLET_CONTEXT_PATH", "/fhir");
             String url = HealthCheck.buildHealthUrl(envOf(env));
-            assertEquals("http://127.0.0.1:9001/actuator/health", url);
+            assertEquals("http://127.0.0.1:9001/actuator/health/readiness", url);
         }
 
         @Test
@@ -137,7 +137,7 @@ class HealthCheckTest {
             env.put("SERVER_SERVLET_CONTEXT_PATH", "/fhir");
             env.put("MANAGEMENT_SERVER_BASE_PATH", "/mgmt");
             String url = HealthCheck.buildHealthUrl(envOf(env));
-            assertEquals("http://127.0.0.1:8080/fhir/actuator/health", url);
+            assertEquals("http://127.0.0.1:8080/fhir/actuator/health/readiness", url);
         }
     }
 }

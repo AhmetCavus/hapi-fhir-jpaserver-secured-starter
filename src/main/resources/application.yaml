@@ -25,6 +25,8 @@ management:
       access: read_only
     health:
       access: read_only
+      show-details: never
+      show-components: never
       probes:
         enabled: true
       group:

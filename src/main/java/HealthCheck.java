@@ -8,8 +8,8 @@ import java.util.function.Function;
 /**
  * Container healthcheck for the HAPI FHIR JPA Server distroless image.
  *
- * Probes the Spring Boot Actuator health endpoint and exits 0 on a 2xx
- * response, 1 otherwise. See
+ * Probes the data-free Spring Boot Actuator readiness endpoint and exits 0 on HTTP 200,
+ * or 1 otherwise. See
  * https://github.com/hapifhir/hapi-fhir-jpaserver-starter/issues/958
  *
  * Configuration (read from environment variables, with Spring Boot defaults):
@@ -59,7 +59,7 @@ public final class HealthCheck {
 		// Spring Boot: context-path only applies when management shares the main port;
 		// otherwise management.server.base-path is used on the management port.
 		String prefix = managementPort.equals(serverPort) ? contextPath : managementBasePath;
-		return "http://127.0.0.1:" + managementPort + prefix + actuatorBasePath + "/health";
+		return "http://127.0.0.1:" + managementPort + prefix + actuatorBasePath + "/health/readiness";
 	}
 
 	private static String firstNonBlank(String... values) {

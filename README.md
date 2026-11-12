@@ -581,7 +581,11 @@ jpa:
 
 ## Docker Health Check
 
-The distroless Docker image includes a built-in health check that probes the Spring Boot Actuator `/actuator/health` endpoint and exits `0` on HTTP 200, `1` otherwise. It is a standalone Java class with no external dependencies, so it works on the distroless base image which has no shell or `curl`.
+The distroless Docker image includes a built-in health check that probes the Spring Boot Actuator `/actuator/health/readiness` endpoint and exits `0` on HTTP 200, `1` otherwise. It is a standalone Java class with no external dependencies, so it works on the distroless base image which has no shell or `curl`.
+
+Only exact `GET` and `HEAD` requests to `/actuator/health/liveness` and `/actuator/health/readiness` are anonymous. These probes expose status only, with health details and components disabled. Their dedicated security chain contains no bearer authentication filter, so malformed or expired bearer headers cannot break probes. All other paths and methods, including `/actuator/health`, other Actuator endpoints, FHIR, MCP and the application UI, retain JWT authentication and the existing CSRF behavior. Non-default management paths require a separately reviewed security mapping; this exception does not grant an `/actuator/**` wildcard.
+
+This health exception does not implement the planned audience, permission or operation restrictions for the learning mission. Resource Server security acceptance remains pending.
 
 To run the health check inside a running container:
 
