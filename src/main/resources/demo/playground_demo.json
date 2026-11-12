@@ -1,0 +1,14 @@
+{
+  "resourceType": "Basic",
+  "id": "playground-demo",
+  "code": {
+    "coding": [
+      {
+        "system": "https://example.invalid/playground/demo",
+        "code": "oauth-learning-demo",
+        "display": "Fictional protocol learning resource"
+      }
+    ],
+    "text": "Synthetic non-clinical OAuth demonstration; no patient data"
+  }
+}

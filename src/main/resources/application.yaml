@@ -54,11 +54,11 @@ spring:
 
   security:
     oauth2:
-      enable: false
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:9090/realms/fhir
-          jwk-set-uri: http://localhost:9090/realms/fhir/protocol/openid-connect/certs
+          issuer-uri: ${FHIR_OIDC_ISSUER:}
+          jwk-set-uri: ${FHIR_OIDC_JWKS_URI:}
+          audiences: [playground-fhir]
           
       # SMART on FHIR bridge — derived endpoint URLs are built from these two base URLs.
       smart:

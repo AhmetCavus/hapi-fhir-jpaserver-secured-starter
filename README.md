@@ -1,6 +1,6 @@
 # HAPI FHIR JPA Server — Secured Starter
 
-> **Project status: Work in progress.** The migration to Gradle (Kotlin DSL) and Java 21 is complete. The Spring Security integration described below is **planned, not yet implemented**. The current server should not be treated as a secured deployment.
+> **Project status: Work in progress.** Gradle/Java 21 and the narrow private Playground Resource Server boundary are implemented. Only the synthetic R4 `Basic/playground-demo` read is authorized under the policy in [SECURITY.md](SECURITY.md). Broader reusable security/SMART capabilities below remain goals; this is not a production deployment claim.
 
 This repository is a community-maintained fork of the official [HAPI FHIR JPA Server Starter](https://github.com/hapifhir/hapi-fhir-jpaserver-starter). It builds on the HAPI FHIR JPA Server to provide a starting point for FHIR applications with an additional, standards-based security layer.
 
@@ -12,7 +12,7 @@ The underlying HAPI FHIR framework is maintained separately in the [main HAPI FH
 | --- | --- | --- |
 | Build system | Gradle with Kotlin DSL (`build.gradle.kts`) instead of Maven | Implemented |
 | Java | Java 21 toolchain | Implemented |
-| Security | Spring Security with OAuth 2.0 Resource Server support | Planned |
+| Security | Spring Security with OAuth 2.0 Resource Server support | Implemented for the private Playground exercise |
 | Reusability | Security components intended for reuse beyond this starter | Design goal |
 
 The application and test sources remain Java; Kotlin DSL is used for the Gradle build configuration.
@@ -34,7 +34,7 @@ The planned approach separates responsibilities:
 
 ### Security and production readiness
 
-**Security is not implemented in this fork yet.** Do not expose the current server to untrusted networks or use it to store real patient data on the assumption that it is protected by this project. Even after security features are introduced, production deployments will require independent reviews and environment-specific hardening, auditing, and operational controls.
+The [private Playground policy](SECURITY.md) requires explicit trusted issuer/JWKS configuration, validates Access Tokens and permits only one synthetic read. Other data operations and interfaces are denied. Keep this exercise private and use no real patient data. Production deployments still require independent review and environment-specific hardening, auditing and operational controls.
 
 The starter also inherits other upstream considerations, including enterprise audit logging and multi-instance subscription infrastructure. See the [HAPI FHIR security documentation](https://hapifhir.io/hapi-fhir/docs/security/introduction.html).
 
@@ -103,7 +103,7 @@ $env:JAVA_TOOL_OPTIONS = '-Djavax.net.ssl.trustStoreType=Windows-ROOT -Djavax.ne
 
 ## Running the upstream reference image via [Docker Hub](https://hub.docker.com/r/hapiproject/hapi)
 
-The commands in this section run the upstream HAPI FHIR distribution, **not this fork or its planned Spring Security integration**. They are useful for comparison with upstream behavior. To run this fork, build the application or its Docker image locally.
+The commands in this section run the upstream HAPI FHIR distribution, **not this fork or its private Playground policy**. They are useful for comparison with upstream behavior. To run this fork, build the application or its Docker image locally with the required trust configuration.
 
 To run the upstream image from Docker Hub:
 
@@ -583,9 +583,9 @@ jpa:
 
 The distroless Docker image includes a built-in health check that probes the Spring Boot Actuator `/actuator/health/readiness` endpoint and exits `0` on HTTP 200, `1` otherwise. It is a standalone Java class with no external dependencies, so it works on the distroless base image which has no shell or `curl`.
 
-Only exact `GET` and `HEAD` requests to `/actuator/health/liveness` and `/actuator/health/readiness` are anonymous. These probes expose status only, with health details and components disabled. Their dedicated security chain contains no bearer authentication filter, so malformed or expired bearer headers cannot break probes. All other paths and methods, including `/actuator/health`, other Actuator endpoints, FHIR, MCP and the application UI, retain JWT authentication and the existing CSRF behavior. Non-default management paths require a separately reviewed security mapping; this exception does not grant an `/actuator/**` wildcard.
+Only exact `GET` and `HEAD` requests to `/actuator/health/liveness` and `/actuator/health/readiness` are anonymous. These probes expose status only, with health details and components disabled. Their dedicated security chain contains no bearer authentication filter, so malformed or expired bearer headers cannot break probes. All other paths require valid bearer authentication and the [default-deny operation policy](SECURITY.md); only the exact synthetic GET with permission can pass. The application chain is stateless and does not accept cookie authentication. Non-default management paths require a separately reviewed security mapping; this exception does not grant an `/actuator/**` wildcard.
 
-This health exception does not implement the planned audience, permission or operation restrictions for the learning mission. Resource Server security acceptance remains pending.
+The separate mission policy adds audience, purpose, permission and operation enforcement; health status alone is not evidence that those checks ran. Use the signed-token and full-server tests in [SECURITY.md](SECURITY.md).
 
 To run the health check inside a running container:
 

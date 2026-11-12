@@ -251,17 +251,13 @@ public class StarterJpaConfig {
 	}
 
 	@Bean
-	public LoggingInterceptor loggingInterceptor(AppProperties appProperties) {
-
-		/*
-		 * Add some logging for each request
-		 */
-
+	public LoggingInterceptor loggingInterceptor() {
 		LoggingInterceptor loggingInterceptor = new LoggingInterceptor();
-		loggingInterceptor.setLoggerName(appProperties.getLogger().getName());
-		loggingInterceptor.setMessageFormat(appProperties.getLogger().getFormat());
-		loggingInterceptor.setErrorMessageFormat(appProperties.getLogger().getError_format());
-		loggingInterceptor.setLogExceptions(appProperties.getLogger().getLog_exceptions());
+		// Request-controlled headers, parameters and bodies are never routine log evidence.
+		loggingInterceptor.setLoggerName("fhir.access");
+		loggingInterceptor.setMessageFormat("fhir_request_completed");
+		loggingInterceptor.setErrorMessageFormat("fhir_request_failed");
+		loggingInterceptor.setLogExceptions(false);
 		return loggingInterceptor;
 	}
 

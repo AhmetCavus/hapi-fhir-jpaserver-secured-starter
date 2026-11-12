@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -33,14 +32,6 @@ public class HealthProbeSecurityConfiguration {
 		// JWT filters belong only to the authenticated application chain below.
 		return http.securityMatcher(probes)
 				.authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
-				.build();
-	}
-
-	@Bean
-	@Order(2)
-	SecurityFilterChain applicationSecurityFilterChain(HttpSecurity http) throws Exception {
-		return http.authorizeHttpRequests(requests -> requests.anyRequest().authenticated())
-				.oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()))
 				.build();
 	}
 }
