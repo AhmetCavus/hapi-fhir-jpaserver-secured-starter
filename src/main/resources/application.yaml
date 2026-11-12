@@ -50,7 +50,7 @@ spring:
   application:
     name: "@project.artifactId@"
 
-security:
+  security:
     oauth2:
       enable: false
       resourceserver:
